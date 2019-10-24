@@ -1,0 +1,20 @@
+{
+  "name": "gympoint",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/caiolv/gympoint.git",
+  "author": "Caio Oliveira <caiolv@me.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "dev:debug": "nodemon --inspect src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "eslint": "^6.5.1",
+    "nodemon": "^1.19.4",
+    "sucrase": "^3.10.1"
+  }
+}
