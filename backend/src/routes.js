@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import SessionController from './app/controllers/SessionController';
+import StudentController from './app/controllers/StudentController';
 
 import autoMiddleware from './app/middlewares/auth';
 
@@ -10,8 +11,7 @@ routes.post('/sessions', SessionController.store);
 
 routes.use(autoMiddleware);
 
-routes.get('/students', (req, res) => {
-  return res.json({ ok: true, user_id: req.userId });
-})
+routes.post('/students', StudentController.store);
+routes.put('/students', StudentController.update);
 
 export default routes;
