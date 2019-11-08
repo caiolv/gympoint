@@ -29,7 +29,9 @@ class StudentController {
     // if (studentExists) {
     //   return res.status(400).json({ error: 'Student already exists. ' });
     // }
-    const { id, name, email, age, weight, height } = await Student.create(req.body);
+    const { id, name, email, age, weight, height } = await Student.create(
+      req.body
+    );
 
     return res.json({
       id,
@@ -37,22 +39,19 @@ class StudentController {
       email,
       age,
       weight,
-      height
+      height,
     });
   }
 
   async update(req, res) {
     const schema = Yup.object().shape({
       name: Yup.string(),
-      email: Yup.string()
-        .email(),
+      email: Yup.string().email(),
       age: Yup.number()
         .positive()
         .integer(),
-      weight: Yup.number()
-        .positive(),
-      height: Yup.number()
-        .positive(),
+      weight: Yup.number().positive(),
+      height: Yup.number().positive(),
     });
 
     if (!(await schema.isValid(req.body))) {
@@ -84,7 +83,7 @@ class StudentController {
       email,
       age,
       weight,
-      height
+      height,
     });
   }
 }
