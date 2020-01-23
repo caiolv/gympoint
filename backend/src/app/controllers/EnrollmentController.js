@@ -1,91 +1,122 @@
 import * as Yup from 'yup';
+import Enrollment from '../models/Enrollment';
 import Plan from '../models/Plan';
+import Student from '../models/Student';
 
 class EnrollmentController {
   async index(req, res) {
     const { page = 1 } = req.query;
 
-    const plans = await Plan.findAll({
-      order: [['price', 'DESC']],
+    const enrollments = await Enrollment.findAll({
+      order: [['start_date', 'DESC']],
       limit: 20,
       offset: (page - 1) * 20,
-      attributes: ['id', 'title', 'duration', 'price'],
+      attributes: ['id', 'start_date', 'end_date', 'price', 'student_id', 'plan_id'],
     });
 
-    return res.json(plans);
+    return res.json(enrollments);
   }
 
   async store(req, res) {
     const schema = Yup.object().shape({
-      title: Yup.string().required(),
-      duration: Yup.number()
-        .required()
-        .positive()
-        .integer(),
-      price: Yup.number()
-        .positive()
-        .required(),
+      start_date: Yup.date().required(),
+      plan_id: Yup.number().required(),
+      student_id: Yup.number().required(),
     });
 
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Validation fails' });
+      return res.status(400).json({ error: 'Validation fails!' });
     }
 
-    const { id, title, duration, price } = await Plan.create(req.body);
+    const { plan_id, start_date, student_id } = req.body;
 
-    return res.json({
-      id,
-      title,
-      duration,
-      price,
+    const student = await Student.findByPk(student_id);
+
+    if (!student) {
+      return res.status(404).json({ error: "Student could not be found." });
+    }
+
+    const plan = await Plan.findByPk(plan_id);
+
+    if (!plan) {
+      return res.status(404).json({ error: "Plan could not be found." });
+    }
+
+    const studentAlreadyEnrolled = await Enrollment.findOne({
+      where: { student_id }
     });
+
+    if (studentAlreadyEnrolled) {
+      return res.status(400).json({ error: "Student alredy enrolled." });
+    }
+
+    const enrollment = await Enrollment.create({
+      student_id,
+      plan_id,
+      start_date,
+      end_date: addMonths(parseISO(start_date), plan.duration),
+      price: plan.getTotalPrice()
+    });
+
+    return res.json({enrollment});
   }
 
   async update(req, res) {
     const schema = Yup.object().shape({
-      title: Yup.string(),
-      duration: Yup.number()
-        .positive()
-        .integer(),
-      price: Yup.number().positive(),
+      start_date: Yup.date(),
+      plan_id: Yup.number(),
+      student_id: Yup.number(),
     });
 
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Validation fails' });
+      return res.status(400).json({ error: 'Validation fails!' });
     }
-
     const { id } = req.params;
 
-    const plan = await Plan.findByPk(id);
+    const enrollment = await Enrollment.findByPk(id);
 
-    if (!plan) {
+    if (!enrollment) {
       return res.status(400).json({ error: 'Plan does not exist. ' });
     }
 
-    const { title, duration, price } = await plan.update(req.body);
+    const { plan_id, start_date, student_id } = req.body;
+
+    const student = await Student.findByPk(student_id);
+
+    if (!student) {
+      return res.status(404).json({ error: "Student could not be found." });
+    }
+
+    const plan = await Plan.findByPk(plan_id);
+
+    if (!plan) {
+      return res.status(404).json({ error: "Plan could not be found." });
+    }
+
+    const { start_date, plan_id, student_id } = await enrollment.update(req.body);
 
     return res.json({
-      title,
-      duration,
-      price,
+      start_date,
+      plan_id,
+      student_id,
     });
   }
 
   async delete(req, res) {
     const { id } = req.params;
-    const plan = await Plan.findByPk(id);
+    const enrollment = await Enrollment.findByPk(id);
 
-    if (!plan) {
-      return res.status(400).json({ error: 'Plan does not exist. ' });
+    if (!enrollment) {
+      return res.status(400).json({ error: 'Enrollment does not exist. ' });
     }
 
-    plan.canceled_at = new Date();
+    enrollment.canceled_at = new Date();
 
-    await Plan.destroy({
+    await Enrollment.destroy({
       where: { id },
     });
 
-    return res.json(plan);
+    return res.json(enrollment);
   }
 }
 
